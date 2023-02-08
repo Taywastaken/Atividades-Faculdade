@@ -29,12 +29,6 @@ public class Atividade1 {
         System.out.println("87 para real(double): " + Double.valueOf(87));
         
         System.out.println("3/4 para inteiro: " + Math.round(3/4));
-        
-        
-        
-        
-        
- 
     }
     
 }
