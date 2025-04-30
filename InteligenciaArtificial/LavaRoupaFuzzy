@@ -1,0 +1,75 @@
+import numpy as np
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+import tkinter as tk
+from tkinter import messagebox
+import matplotlib.pyplot as plt
+
+# Criando as variáveis fuzzy
+sujeira = ctrl.Antecedent(np.arange(0, 11, 1), 'sujeira')
+quantidade = ctrl.Antecedent(np.arange(0, 11, 1), 'quantidade')
+tempo = ctrl.Consequent(np.arange(0, 61, 1), 'tempo')
+
+# Sujeira
+sujeira['baixa'] = fuzz.trimf(sujeira.universe, [0, 0, 5])
+sujeira['media'] = fuzz.trimf(sujeira.universe, [2, 5, 8])
+sujeira['alta'] = fuzz.trimf(sujeira.universe, [5, 10, 10])
+
+# Quantidade de roupas
+quantidade['pouca'] = fuzz.trimf(quantidade.universe, [0, 0, 5])
+quantidade['media'] = fuzz.trimf(quantidade.universe, [2, 5, 8])
+quantidade['muita'] = fuzz.trimf(quantidade.universe, [5, 10, 10])
+
+# Tempo
+tempo['curto'] = fuzz.trimf(tempo.universe, [0, 0, 20])
+tempo['medio'] = fuzz.trimf(tempo.universe, [10, 30, 50])
+tempo['longo'] = fuzz.trimf(tempo.universe, [30, 60, 60])
+
+# Regras fuzzy
+regra1 = ctrl.Rule(sujeira['baixa'] & quantidade['pouca'], tempo['curto'])
+regra2 = ctrl.Rule(sujeira['media'] | quantidade['media'], tempo['medio'])
+regra3 = ctrl.Rule(sujeira['alta'] | quantidade['muita'], tempo['longo'])
+
+# Sistema de controle
+sistema_controle = ctrl.ControlSystem([regra1, regra2, regra3])
+lavagem = ctrl.ControlSystemSimulation(sistema_controle)
+
+# Interface gráfica
+def calcular():
+    try:
+        valor_sujeira = float(entry_sujeira.get())
+        valor_quantidade = float(entry_quantidade.get())
+        
+        if not (0 <= valor_sujeira <= 10 and 0 <= valor_quantidade <= 10):
+            raise ValueError
+
+        lavagem.input['sujeira'] = valor_sujeira
+        lavagem.input['quantidade'] = valor_quantidade
+        lavagem.compute()
+
+        resultado = lavagem.output['tempo']
+        messagebox.showinfo("Resultado", f"Tempo recomendado de lavagem: {resultado:.1f} minutos")
+    except ValueError:
+        messagebox.showerror("Erro", "Por favor, insira valores numéricos entre 0 e 10.")
+
+# Criando a janela
+janela = tk.Tk()
+janela.title("Controle Fuzzy - Máquina de Lavar Roupa")
+
+# Layout
+tk.Label(janela, text="Nível de sujeira (0 a 10):").pack()
+entry_sujeira = tk.Entry(janela)
+entry_sujeira.pack()
+
+tk.Label(janela, text="Quantidade de roupa (0 a 10):").pack()
+entry_quantidade = tk.Entry(janela)
+entry_quantidade.pack()
+
+tk.Button(janela, text="Calcular tempo de lavagem", command=calcular).pack(pady=10)
+
+janela.mainloop()
+
+# Mostrar gráfico
+tempo.view(sim=lavagem)
+plt.title("Resultado Fuzzy - Tempo de Lavagem")
+plt.show()
